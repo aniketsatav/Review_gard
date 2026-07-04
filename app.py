@@ -1,4 +1,4 @@
-﻿from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template
 from collections import Counter
 from pathlib import Path
 import hashlib
@@ -142,7 +142,10 @@ def infer_with_hf_api(text, max_retries=3, retry_delay=12):
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
-    url = f"https://api-inference.huggingface.co/models/{model_id}"
+    endpoints = [
+        f"https://router.huggingface.co/models/{model_id}",
+        f"https://api-inference.huggingface.co/models/{model_id}",
+    ]
     payload_body = {
         "inputs": text,
         "options": {"wait_for_model": True, "use_cache": True},
@@ -150,14 +153,17 @@ def infer_with_hf_api(text, max_retries=3, retry_delay=12):
 
     last_error = None
     for attempt in range(1, max_retries + 1):
-        try:
-            response = requests.post(url, headers=headers, json=payload_body, timeout=90)
-        except requests.exceptions.Timeout:
-            last_error = "HuggingFace API timed out. The model may be warming up — please try again."
-            time.sleep(retry_delay)
-            continue
-        except requests.exceptions.RequestException as exc:
-            raise RuntimeError(f"Network error calling HuggingFace API: {exc}") from exc
+        response = None
+        for url in endpoints:
+            try:
+                response = requests.post(url, headers=headers, json=payload_body, timeout=90)
+                if response.status_code != 404:
+                    break
+            except requests.exceptions.RequestException:
+                continue
+
+        if response is None:
+            raise RuntimeError("Network error calling HuggingFace API across all endpoints.")
 
         # ---- 4xx hard errors — no point retrying ----
         if response.status_code in {401, 403}:
