@@ -91,7 +91,7 @@ mlproject/
 # Machine Learning / Data Science
 # ============================================
 
-# Training data and datasets (keep only processed)
+# Training data and datasets (keep locally, exclude from GitHub)
 data/raw/
 data/training/
 datasets/
@@ -99,8 +99,9 @@ datasets/
 *.tsv
 *.json
 *.jsonl
-reviews.csv
-reviews_with_features.csv
+
+# IMPORTANT: CSV files are excluded from GitHub but kept locally
+# If you need to commit specific CSVs, use: git add -f filename.csv
 
 # Model checkpoints and training artifacts
 checkpoints/

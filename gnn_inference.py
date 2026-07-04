@@ -1,6 +1,14 @@
-import torch
-import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
+try:
+    import torch
+    import torch.nn.functional as F
+    from torch_geometric.nn import GCNConv
+    HAS_PYG = True
+except ImportError:
+    HAS_PYG = False
+    torch = None
+    F = None
+    GCNConv = None
+
 from pathlib import Path
 import numpy as np
 import pickle
@@ -22,18 +30,21 @@ _init_error  = None
 
 
 # ── Model architecture — must match Colab training exactly ────────────────────
-class FakeReviewGNN(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = GCNConv(7, 64)
-        self.conv2 = GCNConv(64, 32)
-        self.classifier = torch.nn.Linear(32, 2)
+if HAS_PYG:
+    class FakeReviewGNN(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.conv1 = GCNConv(7, 64)
+            self.conv2 = GCNConv(64, 32)
+            self.classifier = torch.nn.Linear(32, 2)
 
-    def forward(self, x, edge_index):
-        x = F.relu(self.conv1(x, edge_index))
-        x = F.dropout(x, p=0.3, training=self.training)
-        x = F.relu(self.conv2(x, edge_index))
-        return F.log_softmax(self.classifier(x), dim=1)
+        def forward(self, x, edge_index):
+            x = F.relu(self.conv1(x, edge_index))
+            x = F.dropout(x, p=0.3, training=self.training)
+            x = F.relu(self.conv2(x, edge_index))
+            return F.log_softmax(self.classifier(x), dim=1)
+else:
+    FakeReviewGNN = None
 
 
 # ── One-time loader (first request triggers this) ─────────────────────────────
@@ -43,6 +54,8 @@ def _load_all():
         if _initialized:
             return
         try:
+            if not HAS_PYG:
+                raise ImportError("PyTorch or PyTorch Geometric (torch_geometric) is not installed.")
             if not _GRAPH_PATH.exists():
                 raise FileNotFoundError(f"graph_data.pt not found at {_GRAPH_PATH}")
             if not _MODEL_PATH.exists():
