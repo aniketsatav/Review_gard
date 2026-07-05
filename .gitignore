@@ -124,6 +124,11 @@ mlruns/
 !scaler.pkl
 bert_model/model.safetensors
 
+# EXCEPTION: Keep numpy GNN exports (for Render deployment without torch_geometric)
+!graph_x.npy
+!graph_edges.npz
+!gnn_weights.npz
+
 # Notebooks and experiments
 notebooks/
 experiments/
