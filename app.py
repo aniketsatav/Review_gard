@@ -165,15 +165,33 @@ def infer_with_hf_api(text, max_retries=3, retry_delay=12):
         if response is None:
             raise RuntimeError("Network error calling HuggingFace API across all endpoints.")
 
-        # ---- 4xx hard errors — no point retrying ----
+        # ---- 4xx hard errors — no point retrying (unless we can fallback to space) ----
+        if response.status_code == 404:
+            # Fallback to Gradio Space if Serverless API is disabled for this model
+            try:
+                from gradio_client import Client
+                space_id = "ParagR24/reviewguard-demo"
+                client = Client(space_id)
+                result = client.predict(review_text=text, api_name="/predict")
+                lines = str(result).strip().split('\n')
+                fake_prob = 0.5
+                for line in lines:
+                    if line.upper().startswith("FAKE:"):
+                        val_str = line.split(":")[-1].strip().replace("%", "")
+                        fake_prob = float(val_str) / 100.0
+                        break
+                if fake_prob > 0.5:
+                    return "FAKE", fake_prob
+                else:
+                    return "GENUINE", 1.0 - fake_prob
+            except Exception as e:
+                raise RuntimeError(
+                    f"HuggingFace model not found (404) and Gradio Space fallback failed: {str(e)}"
+                )
+
         if response.status_code in {401, 403}:
             raise RuntimeError(
                 "HuggingFace auth failed. Verify HF_TOKEN has read access to the model repo."
-            )
-        if response.status_code == 404:
-            raise RuntimeError(
-                "HuggingFace model not found. Check that HF_MODEL_ID is correct "
-                "(format: owner/repo) and the repository is public."
             )
         if response.status_code >= 400 and response.status_code != 503:
             raise RuntimeError(f"HuggingFace API error (HTTP {response.status_code}).")
