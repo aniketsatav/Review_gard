@@ -137,7 +137,7 @@ def get_gnn_score(text: str, rating: float = 3.0, bert_score: float = 0.5) -> fl
         with torch.no_grad():
             log_probs = _gnn_model(x_aug, edge_aug)
             probs     = torch.exp(log_probs)
-            fake_prob = float(probs[new_idx][0].item())
+            fake_prob = float(probs[new_idx][1].item())
 
         return round(fake_prob, 4)
 

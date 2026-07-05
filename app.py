@@ -426,7 +426,7 @@ def predict_review(review_text, rating=3.0):
         bert_warning = str(exc)
 
     gnn_score = simulate_gnn_score(review_text, rating=float(rating), bert_score=bert_fake_score)
-    gnn_corrected = 1.0 - gnn_score          # polarity-aligned: higher = more fake
+    gnn_corrected = gnn_score          # polarity-aligned: higher = more fake
     fused_score = 0.65 * bert_fake_score + 0.35 * gnn_corrected
     boost = heuristic_boost(review_text)
     final_score = min(fused_score + boost, 1.0)
