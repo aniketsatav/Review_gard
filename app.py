@@ -28,7 +28,10 @@ STOP_WORDS = {
 
 VAGUE_WORDS = [
     "amazing", "best", "ever", "perfect", "love", "great", "awesome",
-    "excellent", "fantastic", "wonderful", "superb", "outstanding", "incredible"
+    "excellent", "fantastic", "wonderful", "superb", "outstanding", "incredible",
+    "loved", "obsessed", "recommend", "must buy", "must have", "five stars",
+    "5 stars", "highly recommend", "game changer", "life changing", "worth every",
+    "money well spent", "do not hesitate", "no regrets", "blown away",
 ]
 
 NEGATIVE_WORDS = [
