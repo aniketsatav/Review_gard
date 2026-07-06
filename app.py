@@ -261,6 +261,16 @@ def get_bert_fake_score(text):
     return bert_fake_score, backend
 
 
+# Structural spam phrases: "<word> one for", "bought X for", "recommended to", etc.
+_STRUCTURAL_SPAM_PATTERNS = re.compile(
+    r"\b(bought one for|ordered (one|it) for|got (one|it) for"
+    r"|recommend(ed)? (to|this|it)|purchased (one|it) for"
+    r"|works (great|perfectly|amazing)|love this (product|item)"
+    r"|amazing (product|quality|value)|great (product|quality|value))",
+    re.IGNORECASE,
+)
+
+
 def heuristic_boost(text):
     boost = 0.0
     words = text.split()
@@ -273,11 +283,12 @@ def heuristic_boost(text):
     if matches >= 3:
         boost += 0.20
 
+    # Lowered from 4 to 3 — catches "bought/loved/amazing" used 3 times
     word_counts = Counter(
         w.strip(".,!?").lower() for w in words
         if w.strip(".,!?").lower() not in STOP_WORDS and len(w.strip(".,!?")) > 2
     )
-    if word_counts and word_counts.most_common(1)[0][1] >= 4:
+    if word_counts and word_counts.most_common(1)[0][1] >= 3:
         boost += 0.30
 
     sentences = [s.strip() for s in text.replace("!", ".").split(".") if s.strip()]
@@ -291,6 +302,11 @@ def heuristic_boost(text):
     has_negative = any(w in text_lower for w in NEGATIVE_WORDS)
     if not has_negative and len(words) > 15:
         boost += 0.10
+
+    # Structural phrase repetition: same template used 2+ times is a strong spam signal
+    structural_hits = len(_STRUCTURAL_SPAM_PATTERNS.findall(text))
+    if structural_hits >= 2:
+        boost += 0.25
 
     return min(boost, 0.50)
 
