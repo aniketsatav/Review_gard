@@ -322,7 +322,7 @@ For bug reports or feature requests, please open an issue on GitHub.
 
 - **GitHub:** [@Paragraut24](https://github.com/Paragraut24)
 - **Repository:** [ml-project-ReviewGuard](https://github.com/Paragraut24/ml-project-ReviewGuard)
-- **Live Demo:** [https://your-deployment-url.com](https://your-deployment-url.com)
+- **Live Demo:** [https://ml-project-reviewguard.onrender.com/](https://ml-project-reviewguard.onrender.com/)
 
 ---
 
